@@ -1,0 +1,10 @@
+.git
+.gitignore
+Dockerfile
+LICENSE
+README.md
+mise.toml
+mise.local.toml
+.env
+.env.*
+*.log
