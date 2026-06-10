@@ -68,7 +68,14 @@ type server struct {
 	cdn       *upstream
 	threads   *cache
 	avatars   *cache
+	actors    map[string]bool
 	publicURL string
+}
+
+// allowed gates thread reads to configured handles/DIDs, so the proxy is
+// not an open relay. An empty allowlist permits any actor.
+func (s *server) allowed(actor string) bool {
+	return len(s.actors) == 0 || s.actors[strings.ToLower(actor)]
 }
 
 var (
@@ -115,6 +122,10 @@ func (s *server) resolveHandle(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusBadRequest, "InvalidRequest")
 		return
 	}
+	if !s.allowed(handle) {
+		writeJSONError(w, http.StatusForbidden, "Forbidden")
+		return
+	}
 	key := "handle\x00" + strings.ToLower(handle)
 	body, _, err := s.threads.get(key, func() ([]byte, string, error) {
 		return s.up.get("/xrpc/com.atproto.identity.resolveHandle",
@@ -128,8 +139,13 @@ func (s *server) resolveHandle(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) getPostThread(w http.ResponseWriter, r *http.Request) {
 	uri := r.URL.Query().Get("uri")
-	if !postURIRe.MatchString(uri) {
+	m := postURIRe.FindStringSubmatch(uri)
+	if m == nil {
 		writeJSONError(w, http.StatusBadRequest, "InvalidRequest")
+		return
+	}
+	if !s.allowed(m[1]) {
+		writeJSONError(w, http.StatusForbidden, "Forbidden")
 		return
 	}
 	depth := 6

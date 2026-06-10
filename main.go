@@ -12,6 +12,16 @@ import (
 	"time"
 )
 
+func splitList(s string) map[string]bool {
+	out := make(map[string]bool)
+	for _, item := range strings.Split(s, ",") {
+		if item = strings.TrimSpace(item); item != "" {
+			out[strings.ToLower(item)] = true
+		}
+	}
+	return out
+}
+
 // Cloud platforms hand the port over as $PORT; fall back to 8080 locally.
 func defaultAddr() string {
 	if port := os.Getenv("PORT"); port != "" {
@@ -27,6 +37,8 @@ func main() {
 	ttl := flag.Duration("ttl", 45*time.Second, "thread and handle cache TTL")
 	avatarTTL := flag.Duration("avatar-ttl", time.Hour, "avatar image cache TTL")
 	publicURL := flag.String("public-url", "", "external base URL for rewritten avatar links (defaults to the request host)")
+	origins := flag.String("origins", "", "comma-separated origins allowed for cross-origin reads")
+	actors := flag.String("actors", "", "comma-separated handles/DIDs whose posts may be fetched (empty allows any)")
 	flag.Parse()
 
 	s := &server{
@@ -34,6 +46,7 @@ func main() {
 		cdn:       newUpstream(*cdnBase),
 		threads:   newCache(*ttl, 1024),
 		avatars:   newCache(*avatarTTL, 512),
+		actors:    splitList(*actors),
 		publicURL: strings.TrimRight(*publicURL, "/"),
 	}
 
@@ -47,7 +60,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:              *addr,
-		Handler:           mux,
+		Handler:           cors(splitList(*origins), mux),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      30 * time.Second,
