@@ -64,8 +64,11 @@ func (u *upstream) get(path string, params url.Values, accept string) ([]byte, s
 }
 
 type server struct {
-	up      *upstream
-	threads *cache
+	up        *upstream
+	cdn       *upstream
+	threads   *cache
+	avatars   *cache
+	publicURL string
 }
 
 var (
@@ -148,5 +151,5 @@ func (s *server) getPostThread(w http.ResponseWriter, r *http.Request) {
 	if writeUpstreamError(w, err) {
 		return
 	}
-	writeJSON(w, s.threads.ttl, body)
+	writeJSON(w, s.threads.ttl, s.rewriteAvatars(r, body))
 }
