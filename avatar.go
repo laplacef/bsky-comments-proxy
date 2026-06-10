@@ -11,7 +11,7 @@ import (
 // Mirrors of CDN avatar paths: img/avatar/plain/<did>/<cid>, with an
 // optional @<format> suffix or _thumbnail variant. Nothing else on the
 // CDN is reachable.
-var avatarPathRe = regexp.MustCompile(`^img/avatar(?:_thumbnail)?/plain/[A-Za-z0-9._:%-]+/[A-Za-z0-9]+(?:@[a-z0-9]+)?$`)
+var avatarPathRe = regexp.MustCompile(`^img/avatar(?:_thumbnail)?/plain/[A-Za-z0-9][A-Za-z0-9._:%-]*/[A-Za-z0-9]+(?:@[a-z0-9]+)?$`)
 
 func (s *server) avatar(w http.ResponseWriter, r *http.Request) {
 	rest := strings.TrimPrefix(r.URL.Path, "/avatar/")
