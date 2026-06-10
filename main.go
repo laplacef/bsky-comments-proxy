@@ -21,12 +21,21 @@ func defaultAddr() string {
 
 func main() {
 	addr := flag.String("addr", defaultAddr(), "listen address")
+	upstreamBase := flag.String("upstream", "https://public.api.bsky.app", "bluesky XRPC base URL")
+	ttl := flag.Duration("ttl", 45*time.Second, "thread and handle cache TTL")
 	flag.Parse()
+
+	s := &server{
+		up:      newUpstream(*upstreamBase),
+		threads: newCache(*ttl, 1024),
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})
+	mux.HandleFunc("GET /xrpc/com.atproto.identity.resolveHandle", s.resolveHandle)
+	mux.HandleFunc("GET /xrpc/app.bsky.feed.getPostThread", s.getPostThread)
 
 	srv := &http.Server{
 		Addr:              *addr,
