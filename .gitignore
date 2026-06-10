@@ -1,0 +1,16 @@
+# Build output
+/bsky-comments-proxy
+/dist/
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Logs and OS cruft
+logs/
+*.log
+.DS_Store
+
+# Local overrides
+mise.local.toml
