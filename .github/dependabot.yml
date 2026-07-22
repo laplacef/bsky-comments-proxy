@@ -1,0 +1,51 @@
+version: 2
+
+# Weekly grouped version updates, on top of the advisory-driven security
+# updates. Patch and minor auto-merge once CI passes; majors stay manual.
+# Cooldown holds new releases a few days; security updates bypass it.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns:
+          - "*"
+    cooldown:
+      default-days: 5
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      go-minor-patch:
+        update-types:
+          - minor
+          - patch
+    cooldown:
+      default-days: 5
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
+    open-pull-requests-limit: 5
+
+  # Build and runtime base images in the Dockerfile.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: chore(deps)
+    cooldown:
+      default-days: 5
+    open-pull-requests-limit: 5
